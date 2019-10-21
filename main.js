@@ -1,6 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
+var qs = require('querystring');
 
 function templateHTML(title, list, body) {
   return `
@@ -76,8 +77,21 @@ var app = http.createServer(function(request,response){
       response.end(template);
     });
   } else if (pathName === '/create_process') {
-    response.writeHead(404);
-    response.end('success');
+    var body = '';
+    request.on('data', function(data) {
+      body += data;
+    });
+    request.on('end', function() {
+      var post = qs.parse(body);
+      var title = post.title;
+      var description = post.description;
+      fs.writeFile(`data/${title}`, description, 'UTF-8', function(err) {
+        if (err) throw err;
+        response.writeHead(302, {Location: `/?id=${title}`}); // 왜 한글로하면 오류나는지 모르겠다.
+        response.end();
+      });
+    });
+
   } else {
       response.writeHead(404);
       response.end('Not found');
