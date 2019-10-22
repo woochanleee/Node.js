@@ -1,0 +1,25 @@
+{
+  "name": "nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woochanleee/Node.js_study.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/woochanleee/Node.js_study/issues"
+  },
+  "homepage": "https://github.com/woochanleee/Node.js_study#readme",
+  "dependencies": {
+    "sanitize-html": "^1.20.1"
+  }
+}
