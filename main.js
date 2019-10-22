@@ -53,7 +53,14 @@ var app = http.createServer(function(request,response){
           fs.readFile(`data/${queryData.id}`, 'UTF-8', (err, description) => {
             var title = queryData.id;
             var list = templateList(filelist);
-            var template = templateHTML(title, list, `<h2>${title}</h2><p>${description}</p>`, `<a href="/update?id=${title}">update</a>`);
+            var template = templateHTML(title, list, `<h2>${title}</h2><p>${description}</p>`,
+              `
+              <a href="/update?id=${title}">update</a>
+              <form action="delete_process" method="post">
+                <input type="hidden" name="id" value="${title}"/>
+                <input type="submit" value="delete"/>
+              </form>
+              `);
             response.writeHead(200);
             response.end(template);
         });
@@ -135,6 +142,20 @@ var app = http.createServer(function(request,response){
 
        */
      });
+   } else if (pathName === '/delete_process') {
+     var body = '';
+     request.on('data', function(data) {
+       body += data;
+     });
+     request.on('end', function() {
+       var post = qs.parse(body);
+       var id = post.id;
+       console.log(id);
+       fs.unlink(`./data/${id}`, function() {
+         response.writeHead(302, {Location: `/`}); // 왜 한글로하면 오류나는지 모르겠다.
+         response.end();
+       });
+     });
    } else {
       response.writeHead(404);
       response.end('Not found');
@@ -142,4 +163,4 @@ var app = http.createServer(function(request,response){
 });
 app.listen(3000);
 
-https://www.youtube.com/watch?v=yn5VtLGbyAE&list=PLuHgQVnccGMA9QQX5wqj6ThK7t2tsGxjm&index=47
+// https://www.youtube.com/watch?v=yn5VtLGbyAE&list=PLuHgQVnccGMA9QQX5wqj6ThK7t2tsGxjm&index=47
