@@ -2,9 +2,9 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
-
-var template = require('./lib/template.js')
-
+var template = require('./lib/template.js');
+var path = require('path');
+var sanitizeHtml = require('sanitize-html');
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -23,14 +23,19 @@ var app = http.createServer(function(request,response){
           });
       } else {
         fs.readdir('./data', (error, filelist) => {
-          fs.readFile(`data/${queryData.id}`, 'UTF-8', (err, description) => {
+          var filteredId = path.parse(queryData.id).base;
+          fs.readFile(`data/${filteredId}`, 'UTF-8', (err, description) => {
             var title = queryData.id;
+            var sanitizedTitle = sanitizeHtml(title);
+            var sanitizedDescription = sanitizeHtml(description, {
+              allowedTags: ['h1']
+            });
             var list = template.List(filelist);
-            var html = template.HTML(title, list, `<h2>${title}</h2><p>${description}</p>`,
+            var html = template.HTML(title, list, `<h2>${sanitizedTitle}</h2><p>${sanitizedDescription}</p>`,
               `
-              <a href="/update?id=${title}">update</a>
+              <a href="/update?id=${sanitizedTitle}">update</a>
               <form action="delete_process" method="post">
-                <input type="hidden" name="id" value="${title}"/>
+                <input type="hidden" name="id" value="${sanitizedTitle}"/>
                 <input type="submit" value="delete"/>
               </form>
               `);
@@ -42,7 +47,7 @@ var app = http.createServer(function(request,response){
   } else if (pathName === '/create') {
     fs.readdir('./data', (error, filelist) => {
       var title = 'Welcome - create';
-      var list = (filelist);
+      var list = template.List(filelist);
       var html = template.HTML(title, list, `
         <form action="/create_process" method="post">
           <p><input type="text" name="title" placeholder="title"/></p>
@@ -74,7 +79,8 @@ var app = http.createServer(function(request,response){
     });
   } else if (pathName === '/update') {
     fs.readdir('./data', (error, filelist) => {
-      fs.readFile(`data/${queryData.id}`, 'UTF-8', (err, description) => {
+      var filteredId = path.parse(queryData.id).base;
+      fs.readFile(`data/${filteredId}`, 'UTF-8', (err, description) => {
         var title = queryData.id;
         var list = template.List(filelist);
         var html = template.HTML(title, list,
@@ -104,7 +110,9 @@ var app = http.createServer(function(request,response){
        var id = post.id;
        var title = post.title;
        var description = post.description;
-       fs.rename(`data/${id}`, `data/${title}`, function(error) {
+       var filteredId = path.parse(id).base;
+
+       fs.rename(`data/${filteredId}`, `data/${title}`, function(error) {
          fs.writeFile(`data/${title}`, description, 'UTF-8', function(err) {
            if (err) throw err;
            response.writeHead(302, {Location: `/?id=${title}`}); // 왜 한글로하면 오류나는지 모르겠다.
@@ -123,7 +131,8 @@ var app = http.createServer(function(request,response){
      request.on('end', function() {
        var post = qs.parse(body);
        var id = post.id;
-       console.log(id);
+       var filteredId = path.parse(id).base;
+
        fs.unlink(`./data/${id}`, function() {
          response.writeHead(302, {Location: `/`}); // 왜 한글로하면 오류나는지 모르겠다.
          response.end();
